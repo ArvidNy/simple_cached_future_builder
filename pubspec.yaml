@@ -1,6 +1,6 @@
 name: simple_cached_future_builder
 description: A simplified FutureBuilder with basic caching abilities to not fetch new data on each rebuild.
-version: 0.1.0
+version: 0.1.1
 homepage: https://github.com/ArvidNy/simple_cached_future_builder
 issue_tracker: https://github.com/ArvidNy/simple_cached_future_builder/issues
 screenshots:
