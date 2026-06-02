@@ -5,3 +5,7 @@
 # Xcode-related
 **/dgph
 **/xcuserdata/
+
+# iOS and MacOS build artifacts
+**/build/
+**/DerivedData/

@@ -22,7 +22,7 @@ Add `simple_cached_future_builder` as a [dependency in your pubspec.yaml file](h
 ### Basic usage
 ```dart
 SimpleCachedFutureBuilder<String>(
-    future: get(Uri.parse('https://www.boredapi.com/api/activity'))
+    future: get(Uri.parse('https://bored-api.appbrewery.com/random'))
             .then((value) => value.body),
     builder: (context, body) {
         return Text(jsonDecode(body)['activity']);
@@ -33,7 +33,7 @@ Compared to a `FutureBuilder`, you will not have to return a widget while loadin
 
 ```diff
 FutureBuilder<String>(
-    future: get(Uri.parse('https://www.boredapi.com/api/activity'))
+    future: get(Uri.parse('https://bored-api.appbrewery.com/random'))
         .then((value) => value.body),
     builder: ((context, snapshot) {
 -        if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
@@ -47,7 +47,7 @@ FutureBuilder<String>(
 ### All options
 ```dart
 SimpleCachedFutureBuilder<String>(
-    future: get(Uri.parse('https://www.boredapi.com/api/activity'))
+    future: get(Uri.parse('https://bored-api.appbrewery.com/random'))
         .then((value) => value.body),
     builder: (context, activityResponse) {
         var activityData = jsonDecode(activityResponse);
@@ -78,6 +78,7 @@ The cache manager can be overridden to handle the cache in some other way than t
 class MyCustomCacheManager extends CacheManager {
   @override
   void clearCache() {
+    super.clearCache(); // required
     // TODO: Clear database
   }
 
@@ -88,6 +89,7 @@ class MyCustomCacheManager extends CacheManager {
 
   @override
   void removeCache(SimpleCache tag) {
+    super.removeCache(tag); // required
     // TODO: Delete cache
   }
 

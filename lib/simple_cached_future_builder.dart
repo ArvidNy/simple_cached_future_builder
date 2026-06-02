@@ -110,48 +110,47 @@ class SimpleCachedFutureBuilder<T> extends StatefulWidget {
 
 class _SimpleCachedFutureBuilderState2<T>
     extends State<SimpleCachedFutureBuilder<T>> {
-  T? _futureValue;
+  late Future<T> _future;
 
-  Future<T> get futureValue async {
+  @override
+  void initState() {
+    super.initState();
+    _future = _resolveFuture();
+  }
+
+  @override
+  void didUpdateWidget(SimpleCachedFutureBuilder<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Re-resolve when the cache identity changes (different tag or cache removed).
+    if (widget.cache?.tag != oldWidget.cache?.tag) {
+      _future = _resolveFuture();
+    }
+  }
+
+  Future<T> _resolveFuture() async {
     if (widget.cache != null &&
         await widget._cacheManager.exists(widget.cache!)) {
       return widget._cacheManager.retrieveCache(widget.cache!);
-    } else if (widget.cache != null) {
-      _futureValue = await widget.future;
-      if (_futureValue != null) {
-        widget._cacheManager.storeCache(widget.cache!, _futureValue!);
-        return _futureValue!;
-      }
     }
-    return widget.future;
+    final value = await widget.future;
+    if (value != null && widget.cache != null) {
+      widget._cacheManager.storeCache(widget.cache!, value);
+    }
+    return value;
   }
 
   @override
   Widget build(BuildContext context) {
+    // Synchronous cache hit: render immediately without a loading-widget frame.
     if (widget.cache != null) {
-      // Use cached data to build the widget
-      return FutureBuilder(
-          future: Future.value(widget._cacheManager.exists(widget.cache!)),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done &&
-                snapshot.hasData) {
-              if (snapshot.data!) {
-                return widget.builder(
-                    context, widget._cacheManager.retrieveCache(widget.cache!));
-              } else {
-                return newFutureBuilder;
-              }
-            } else {
-              return widget.onLoadingWidget ?? Container();
-            }
-          });
-    } else {
-      return newFutureBuilder;
+      final exists = widget._cacheManager.exists(widget.cache!);
+      if (exists is bool && exists) {
+        return widget.builder(
+            context, widget._cacheManager.retrieveCache(widget.cache!) as T);
+      }
     }
-  }
-
-  Widget get newFutureBuilder => FutureBuilder<T>(
-      future: futureValue,
+    return FutureBuilder<T>(
+      future: _future,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done &&
             snapshot.hasData) {
@@ -162,7 +161,9 @@ class _SimpleCachedFutureBuilderState2<T>
         } else {
           return widget.onLoadingWidget ?? Container();
         }
-      });
+      },
+    );
+  }
 }
 
 class SimpleCache {
@@ -277,7 +278,7 @@ abstract class CacheManager<T> {
 
   Duration timeLeftFor(SimpleCache simpleCache) => Duration(
       seconds: (simpleCache.validFor?.inSeconds ?? 0) -
-          (_TimerManager._timers[simpleCache]?.tick ?? 0));
+          (_TimerManager._timers[simpleCache.tag]?.tick ?? 0));
 
   Stream<Duration?>? stream(SimpleCache simpleCache) =>
       _TimerManager._timers[simpleCache.tag]?.stream();
